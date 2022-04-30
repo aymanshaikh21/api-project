@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- **************************************************************************************** -->
+    <!-- *                                                                                      * -->
+    <!-- * Do not change anything within the <head></head> section of the HTML                  * -->
+    <!-- *                                                                                      * -->
+    <!-- **************************************************************************************** -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+	<style> .btn{border:1px solid black; padding:5px;display:inline-block} </style>
+</head>
+<body>
+    <!-- **************************************************************************************** -->
+    <!-- *                                                                                      * -->
+    <!-- * Nothing to change here in the <body> ... unless you want to :-)                      * -->
+    <!-- *                                                                                      * -->
+    <!-- **************************************************************************************** -->
+	<div class="container">
+		<br>
+		<h1>Students Sent by School vs SAT means </h1>
+		<p> Please press this button to see the effect of number of test takers on math SAT score</p> 
+		<p><input type="button" class="btn btn-primary" id="btn_1" value="Show test takers vs Math SAT score line chart"></p>
+		
+		<div id="displayChart1"></div> 
+		<div id= "Axis"></div>
+		<div id= "caption1"></div>
+<!-- Comparison Chart below-->
+
+		<br><br>
+		<h1> Average SAT score comparision by section </h1>
+		<p> Please Press this button to see comparision between average Math vs Reading vs Writing SAT scores</p>
+		<p><input type="button" class="btn btn-primary" id="btn_2" value="Show mean score comparision"></p>
+
+		<div id="displayChart2"></div> 
+		<div id= "Axis2"></div>
+		<div id= "caption2"></div>
+		<br><br>
+	</div>
+</body>
+<script>
+
+//sort function for array, rising order 
+function sortFunction (a,b) { 
+	if (a[0]===b[0]){ 
+		return 0;
+	}
+	else
+		return (a[0] < b[0]) ? -1:1; 
+}
+
+function displayTestersVsMathscore() { 
+	//get data from API
+	$.getJSON("https://data.cityofnewyork.us/resource/zt9s-n5aj.json",function(schoolData){ 
+		console.log(schoolData); 
+	
+			// Extracts number of test takers and respective SAT scores and puts them into a two dimensional array;
+			let combinedData = [];
+			for (var i=0; i<schoolData.length; i++) { //loop to populate values
+				if (isNaN(schoolData[i]["number_of_test_takers"]) == false && isNaN(schoolData[i]["mathematics_mean"]) == false ){ // We only want numbers for both axis; 
+					let x = schoolData[i]["number_of_test_takers"];
+					let y = schoolData[i]["mathematics_mean"];
+					combinedData.push([parseInt(x), parseInt(y)]);
+				}
+			}		
+
+			//sort array by number of students
+			let sortedCombinedData = (combinedData.sort(sortFunction));
+			console.log(sortedCombinedData);
+
+			//Need to extract data from 2D array and put into HTMLstyle formating for chart data
+			let HTMLdata = 't:';
+
+			for (var i=0; i< sortedCombinedData.length; i++){ 
+				HTMLdata += sortedCombinedData[i][0];
+				HTMLdata += ',';
+			}
+			HTMLdata = HTMLdata.slice(0,-1);
+			HTMLdata += '|'; 
+
+			for (var i=0; i< sortedCombinedData.length; i++){ 
+				HTMLdata += sortedCombinedData[i][1];
+				HTMLdata += ',';
+			}
+			HTMLdata = HTMLdata.slice(0,-1);
+			HTMLdata += '|';
+
+			console.log(HTMLdata);
+			//Chart data is now complete.
+			
+			// Then I would finally need to display the HTML link to the div.               
+			var imageHTMLcode = '<img src= "https://image-charts.com/chart?cht=lxy&chd='+ HTMLdata +'&chs=700x200&chxt=x,y&chtt=Number of Test Takers vs Math SAT Scores"&chdl=hi|/>';
+			console.log(imageHTMLcode); 
+			$('#displayChart1').html(imageHTMLcode);
+
+	});
+}
+
+function showAverageScoresBySection() { 
+	//get data from API
+	$.getJSON("https://data.cityofnewyork.us/resource/zt9s-n5aj.json",function(schoolData){ 
+		console.log(schoolData); 
+
+			let readingSum = 0;
+			let writingSum = 0; 
+			let mathematicsSum = 0;
+			let divisor = 0;
+			
+
+		for (var i=0; i<schoolData.length; i++) { //loop to populate values
+				if (isNaN(schoolData[i]["critical_reading_mean"]) == false && isNaN(schoolData[i]["mathematics_mean"]) == false && isNaN(schoolData[i]["writing_mean"]) == false){ // We only want numbers for both axis; 
+					readingSum += parseInt(schoolData[i]["critical_reading_mean"]);
+					mathematicsSum += parseInt(schoolData[i]["mathematics_mean"]);
+					writingSum += parseInt(schoolData[i]["writing_mean"]);
+					divisor++;	
+				}
+			}
+			console.log(readingSum);
+			console.log(writingSum);
+			console.log(mathematicsSum);
+		// averages by 100s
+			let readingAverage = (readingSum / (100*divisor)).toFixed(2); 
+			let writingAverage = (writingSum / (100*divisor)).toFixed(2); 
+			let mathematicsAverage = (mathematicsSum/ (100*divisor)).toFixed(2);
+			
+			console.log(readingAverage);
+			console.log(writingAverage);
+			console.log(mathematicsAverage);
+
+
+
+		//HTML formatting
+			let HTMLScoreData = "t:"+readingAverage +"|"+writingAverage+"|"+mathematicsAverage+"|";
+			let HTMLLabels = "Reading Average|Writing Average|Math Average";
+			console.log(HTMLScoreData);
+			console.log(HTMLLabels);
+
+			
+			var imageHTMLcode = '<img src="https://image-charts.com/chart?chbh=a&chds=0%2C120&chm=N%2C000000%2C0%2C%2C10%7CN%2C000000%2C1%2C%2C10%7CN%2C000000%2C2%2C%2C10&chma=0%2C0%2C10%2C10&chs=700x150&cht=bvg&chxt=y&chtt=Mean SAT scores by category(in hundreds)&chd='+HTMLScoreData+'&chdl='+HTMLLabels+'"/>';
+			console.log(imageHTMLcode);
+			$('#displayChart2').html(imageHTMLcode);
+
+	});
+}
+
+
+
+
+
+//click event handlers
+
+$('#btn_1').click(function(){
+	displayTestersVsMathscore();
+	$('#Axis').html("<br> <b>[Y-axis]:</b> Math SAT scores (out of 800) <b>[X-axis]:</b> Number of students sent by each school.");
+	$('#caption1').html("As number of test takers sent goes up, the mean math SAT score for that school tends to increase.");
+});
+
+$('#btn_2').click(function(){
+	showAverageScoresBySection();
+	$('#Axis2').html("<br><b>Scores are shown in hundreds</b>");
+	$('#caption2').html("With a reading average of 404, Writing average of 398, and a Math average of 413,<b>the average score of students remained roughly equal</b> across all sections of the exam.");
+});
+
+
+
+</script>
+</html>
